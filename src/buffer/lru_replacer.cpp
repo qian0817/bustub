@@ -18,7 +18,6 @@ LRUReplacer::LRUReplacer(size_t num_pages) {}
 
 LRUReplacer::~LRUReplacer() = default;
 
-// 删除与Replacer跟踪的所有元素相比最近被访问次数最少的对象，将其内容存储在输出参数中并返回True。如果Replacer是空的，则返回False。
 bool LRUReplacer::Victim(frame_id_t *frame_id) {
   std::lock_guard<std::mutex> lock_guard(mutex_);
   if (lru_list_.empty()) {
@@ -31,7 +30,6 @@ bool LRUReplacer::Victim(frame_id_t *frame_id) {
   return true;
 }
 
-// 这个方法应该在一个页面被钉在BufferPoolManager的一个框架上之后被调用。它应该从LRUReplacer中移除包含钉住的页面的框架。
 void LRUReplacer::Pin(frame_id_t frame_id) {
   std::lock_guard<std::mutex> lock_guard(mutex_);
   auto find_result = lru_map_.find(frame_id);
@@ -41,9 +39,11 @@ void LRUReplacer::Pin(frame_id_t frame_id) {
   }
 }
 
-//  当一个页面的pin_count变成0的时候，这个方法应该被调用，这个方法应该把包含未被钉住的页面的框架添加到LRUReplacer中。
 void LRUReplacer::Unpin(frame_id_t frame_id) {
   std::lock_guard<std::mutex> lock_guard(mutex_);
+  if (lru_list_.size() >= num_pages_) {
+    return;
+  }
   auto find_result = lru_map_.find(frame_id);
   if (find_result != lru_map_.end()) {
     return;
