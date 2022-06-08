@@ -202,7 +202,7 @@ bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) {
   std::lock_guard<std::mutex> guard(latch_);
   auto find_result = page_table_.find(page_id);
   if (find_result == page_table_.end()) {
-    return false;
+    return true;
   }
   auto frame_id = find_result->second;
   auto page = &pages_[frame_id];
@@ -211,7 +211,7 @@ bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) {
   if (page->GetPinCount() == 0) {
     replacer_->Unpin(frame_id);
   }
-  return true;
+  return page->GetPinCount() > 0;
 }
 
 page_id_t BufferPoolManagerInstance::AllocatePage() {
